@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build glfw app",
+      "type": "shell",
+      "command": "clang",
+      "args": [
+        "main.c",
+        "-o", "main",
+        "-I/opt/homebrew/include",
+        "-L/opt/homebrew/lib",
+        "-lglfw",
+        "-framework", "Cocoa",
+        "-framework", "IOKit",
+        "-framework", "CoreVideo"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$gcc"
+    }
+  ]
+}

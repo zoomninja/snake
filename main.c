@@ -94,6 +94,7 @@ int main(){
 		
 		
 
+	
         
         glfwPollEvents(); //makes the window do stuff
     }

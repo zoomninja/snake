@@ -77,9 +77,18 @@ int main(){
 	//in this case we are using core which means we can only use modern functions
 
 	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f, //lower left
+		0.5f, -0.5f, 0.0f, //lower right
+		0.0f, 0.5f, 0.0f, //middle up
+		-0.25f, 0.0f, 0.0f, //left middle
+		0.25f, 0.0f, 0.0f, //right middle
+		0.0f, -0.5f, 0.0f //middle down
+	};
+
+	GLuint indices[] = {
+		0, 3, 5, //lower left triangle
+		3, 2, 4, //lower right triangle
+		5, 4, 1 //upper triangle
 	};
 
 
@@ -127,13 +136,15 @@ int main(){
 
 
 
-	GLuint VAO, VBO; //vertex buffer object to send stuff from cpu to gpu in big batches
+	GLuint VAO, VBO, EBO; //vertex buffer object to send stuff from cpu to gpu in big batches
+	//index bufffer is EBO
 	//vertex array object basically tells opengl what VBOs to use and where to find them
 	//stores an array of VBOs probably
 	//makes it easier to change VBOs
 	glGenVertexArrays(1, &VAO); //1 because only 1 object
 	//MAKE SURE TO CREATE VAO BEFORE VBO
 	glGenBuffers(1, &VBO); //1 because only 1 3d object //creates the VBO
+	glGenBuffers(1, &EBO); //1 cuz one object //creates the EBO
 
 	glBindVertexArray(VAO); //binds the current vertex array at the VAO
 
@@ -148,6 +159,9 @@ int main(){
 	//READ means the vertices will be read?
 	//COPY will copy the vertices?
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	//configuration of VAO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	//first input is the index of the vertex attribute we want to use //a vertex attribute is a way of communicating with a vertex shader from the outside
@@ -160,6 +174,7 @@ int main(){
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //makes sure we dont accidentally change a VBO or VAO with a function
 	//basically unbinds it by binding it to 0
 	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
     while (!glfwWindowShouldClose(window)){
@@ -167,17 +182,25 @@ int main(){
 		glClear(GL_COLOR_BUFFER_BIT); //tell gl to execute the command?
 		glUseProgram(shaderProgram); //actiavets the shader program
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//first input is the type of primitive we want to use
-		//second input is the starting index of the vertices, 0
-		//third input is the amount of vertices we want to draw
+		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+		/*first input is the type of primitive we want to use
+		second input is the starting index of the vertices, 0
+		third input is the amount of vertices we want to draw
+		thats for glDrawArrays but for glDrawElements:
+		first is the same
+		second is number of indices we want to use (basically same as a vertex vertices whatever)
+		third is the datatype of our indices
+		fourth is the index of our indices which is 0 in our case
+		*/
 
 		glfwSwapBuffers(window); //swap the buffers
         glfwPollEvents(); //takes care of all glwf events
     }
 
+	//delete objects we've created
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(shaderProgram);
 
 	glfwDestroyWindow(window);

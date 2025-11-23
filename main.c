@@ -29,6 +29,10 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 //glfw callbacks
 
+
+
+
+
 void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -42,6 +46,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}  
+
 
 
 
@@ -53,21 +62,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 
 
-int init(){
+
+
+
+
+int main(){
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()){
         printf("glwf init failed");
     }
-	return 0;
-}
-
-int exitcode(){
-	glfwTerminate();
-	return 0;
-}
-
-int main(){
-	init();
 
 	//tell glfw what version of opengl we are using
 	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4); //number before the decimal (4).1
@@ -77,13 +80,15 @@ int main(){
 	//in this case we are using core which means we can only use modern functions
 
 	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
-		-0.5f, -0.5f, 0.0f, //lower left
+		0.05f, 0.05f, 0.0f, //top right
+		0.05f, -0.05f, 0.0f, //bottom right
+		-0.05f, -0.05f, 0.0f, //bottom left
+		-0.05f, 0.05f, 0.0f //top left
 	};
 
 	GLuint indices[] = {
-		0, 3, 5, //lower left triangle
-		3, 2, 4, //lower right triangle
-		5, 4, 1 //upper triangle
+		3, 0, 1,
+		1, 2, 3
 	};
 
 
@@ -91,8 +96,10 @@ int main(){
     if (!window){ //checks if the window was created
         printf("window creation failed");
     }
-
-	glfwSetKeyCallback(window, key_callback); //make the window call key_callback function whenever a key is pressed
+	
+	//set callbacks
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
 	glfwMakeContextCurrent(window); //sets the current context to the window
@@ -172,12 +179,19 @@ int main(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
+
+
+	//while loop
+
+
+
+
     while (!glfwWindowShouldClose(window)){
-		glClearColor(0.07f, 0.13f, 0.17f, 1.0f); //tell gl to prepare this color in the back buffer
-		glClear(GL_COLOR_BUFFER_BIT); //tell gl to execute the command?
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
+		glClear(GL_COLOR_BUFFER_BIT); //tell gl to execute the command //uses the current state
 		glUseProgram(shaderProgram); //actiavets the shader program
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
-		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		/*first input is the type of primitive we want to use
 		second input is the starting index of the vertices, 0
 		third input is the amount of vertices we want to draw
@@ -192,6 +206,15 @@ int main(){
         glfwPollEvents(); //takes care of all glwf events
     }
 
+
+
+
+
+
+
+
+
+
 	//delete objects we've created
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
@@ -199,7 +222,7 @@ int main(){
 	glDeleteProgram(shaderProgram);
 
 	glfwDestroyWindow(window);
-	exitcode();
+	glfwTerminate();
     return 0;
 }
 

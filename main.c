@@ -5,8 +5,8 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "include/glad/glad.h"
-#include "include/GLFW/glfw3.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 
 
@@ -78,11 +78,6 @@ int main(){
 
 	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
 		-0.5f, -0.5f, 0.0f, //lower left
-		0.5f, -0.5f, 0.0f, //lower right
-		0.0f, 0.5f, 0.0f, //middle up
-		-0.25f, 0.0f, 0.0f, //left middle
-		0.25f, 0.0f, 0.0f, //right middle
-		0.0f, -0.5f, 0.0f //middle down
 	};
 
 	GLuint indices[] = {

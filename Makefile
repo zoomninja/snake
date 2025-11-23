@@ -7,7 +7,7 @@ all: run
 
 # Build rule
 $(OUT): $(SRC)
-	$(CC) $(SRC) -o $(OUT) -I/opt/homebrew/include -L/opt/homebrew/lib -Llib -lglad -lglfw -framework Cocoa -framework IOKit -framework CoreVideo
+	$(CC) $(SRC) -o $(OUT) -I/opt/homebrew/include -Iinclude -L/opt/homebrew/lib -Llib -lglad -lglfw -framework Cocoa -framework IOKit -framework CoreVideo
 
 # Run rule
 run: $(OUT)

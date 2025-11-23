@@ -11,18 +11,18 @@
 
 
 // Vertex Shader source code
-const char* vertexShaderSource = "#version 330 core\n"
+const char* vertexShaderSource = "#version 410 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 "}\0";
 //Fragment Shader source code
-const char* fragmentShaderSource = "#version 330 core\n"
+const char* fragmentShaderSource = "#version 410 core\n"
 "out vec4 FragColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 "}\n\0";
 
 
@@ -40,10 +40,23 @@ void error_callback(int error, const char* description)
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-	}
-        
+	if (action == GLFW_PRESS){
+		switch (key){
+			case GLFW_KEY_ESCAPE:
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
+				break;
+			case GLFW_KEY_Q:
+				{} //because for some reason you cant declare after a label
+				GLint polygonMode[2]; //first value is for front facing polygons and second is for back facing polygons
+				glGetIntegerv(GL_POLYGON_MODE, polygonMode);
+				if (polygonMode[0] == GL_FILL){
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				}else{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				}
+				break;
+		}
+	}   
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -72,7 +85,7 @@ int main(){
         printf("glwf init failed");
     }
 
-	//tell glfw what version of opengl we are using
+	//configure opengl
 	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4); //number before the decimal (4).1
  	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1); //ohhhh this is what number is after the decimal in this case 4.(1)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); //idk
@@ -104,6 +117,10 @@ int main(){
 
 	glfwMakeContextCurrent(window); //sets the current context to the window
 
+
+	//load opengl
+
+
 	int version_glad = gladLoadGL(); //loads gl
   	if ( version_glad == 0 ) { //checks if gl loaded
     	fprintf( stderr, "ERROR: Failed to initialize OpenGL context.\n" );
@@ -114,9 +131,15 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
   	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 
+	//window
+
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height); //gets width and height of the window
 	glViewport(0, 0, width, height); //create a viewport
+
+
+	//shaders
+
 
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER); //create the shader into a unsigned int IS A REFERENCE (POINTER?)!!!
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
@@ -133,6 +156,15 @@ int main(){
 
 	glLinkProgram(shaderProgram); //links the shader program or whatever
 
+	int success;
+	char infoLog[512];
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); //check for errors
+	if(!success) {
+    	glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+	}
+
+	
+
 	glDeleteShader(vertexShader); //deletes the shaders because theyre already in the program itself
 	glDeleteShader(fragmentShader);
 
@@ -145,14 +177,14 @@ int main(){
 	//makes it easier to change VBOs
 	glGenVertexArrays(1, &VAO); //1 because only 1 object
 	//MAKE SURE TO CREATE VAO BEFORE VBO
-	glGenBuffers(1, &VBO); //1 because only 1 3d object //creates the VBO
+	glGenBuffers(1, &VBO); //1 because only 1 3d object //creates the VBO //try to store vertices in big batches because it could be slow if sending data to gpu too often
 	glGenBuffers(1, &EBO); //1 cuz one object //creates the EBO
 
 	glBindVertexArray(VAO); //binds the current vertex array at the VAO
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO); //binds the "current GL_ARRAY_BUFFER" as the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); //binds the current "GL_ARRAY_BUFFER" as the VBO
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //to store the vertices in the VBO
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW); //to store the vertices in the VBO
 	//last param is the way you want the vertices to be used
 	//STREAM means the vertices will be modified once and used a few times 
 	//STATIC means the vertices will be modified once and used many many times

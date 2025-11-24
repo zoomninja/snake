@@ -114,11 +114,11 @@ int main(){
 
 
 	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
-		//positions			//colors         //texture coords (0,0 is at the bottom left)
-		0.05f, 0.05f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //top right
-		0.05f, -0.05f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, //bottom right
-		-0.05f, -0.05f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f//bottom left
-		-0.05f, 0.05f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f//top left
+		//positions				//colors         	//texture coords (0,0 is at the bottom left)
+		0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 0.0f, 	1.0f, 1.0f, //top right
+		0.05f, -0.05f, 0.0f, 	0.0f, 1.0f, 0.0f, 	1.0f, 0.0f, //bottom right
+		-0.05f, -0.05f, 0.0f, 	0.0f, 0.0f, 1.0f, 	0.0f, 0.0f//bottom left
+		-0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 1.0f, 	0.0f, 1.0f//top left
 	};
 
 
@@ -129,68 +129,6 @@ int main(){
 		3, 0, 1,
 		1, 2, 3
 	};
-
-	//textures
-
-	float texCoords[] = { //0, 0 is in the bottom left corner
-    0.0f, 0.0f,  // lower-left corner  
-    1.0f, 0.0f,  // lower-right corner
-    1.0f, 1.0f,   // top right corner
-	0.0f, 1.0f    //top left corner
-	};
-
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	//first input is how many textures to load
-	//second input is where to load the textures
-	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	
-	//sets the configuration only to the currently bound texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	//first argument is the texture type which is 2d
-	//second argument says what option we want to set and for which axis (s, t, r is the same as x, y, z)
-	//third argument is the texture wrapping mode //required
-
-	//basically the texture coordinates will not be exactly the same as the texture pixels so we use this to configure how it estimates it
-	//its called texture sampling
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//min is the setting for when it scales downwards
-	//mag is the setting for when it scales upwards
-	//GL_NEAREST just takes the nearest pixel's color (looks pixelated)
-	//GL_LINEAR takes the interpolated color of the four nearest pixels (looks better but prolly laggier)
-
-	//mipmap stuff look at the tutorial for more info
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	printf("before stb stuff");
-
-	//stb stuff
-	int imageWidth, imageHeight, nrChannels;
-	unsigned char *data = stbi_load("resources/textures/cat.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
-	//end
-
-	printf("after stb stuff");
-
-	if (data){
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		//first input is type of texture to generate into (this means GL_TEXTURE_1D and 3D will not be affected) //generates into the current GL_TEXTURE_2D object
-		//The second argument specifies the mipmap level for which we want to create a texture for if you want to set each mipmap level manually, but we'll leave it at the base level which is 0.
-		//third input is what color format we want (should be the same as the image color format)
-		//fourth and fifth inputs are for what we want the width and height of the resulting texture to be //we will just use the width and height we got from the texture before
-		//sixth input should alawyas be 0 (legacy stuff)
-		//The 7th and 8th argument specify the format and datatype of the source image. We loaded the image with RGB values and stored them as chars (bytes) so we'll pass in the corresponding values.
-		//The last argument is the actual image data.
-		//once this is called the currently bound texture object now stores the texture image 
-		glGenerateMipmap(GL_TEXTURE_2D); //automatically genereates all the mipmaps for the current texture
-	}else{
-		printf("texture was not found in files");
-	}
-
-	stbi_image_free(data); //free data used by the data variable
 
 
 
@@ -291,12 +229,13 @@ int main(){
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	//configuration of VAO
+	//position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	//first input is the index of the vertex attribute we want to use //a vertex attribute is a way of communicating with a vertex shader from the outside
 	//second input is how many values we have per vertex which is 3 in our case becaus we have 3 floats
 	//third input is what type of values we have
 	//fourth input only matters if we have coordinates as ints 
-	//fifth input is the stride of our vertices which is just the amount of data between each vertex //in our case since we have 3 floats its just 3 times the size of one float
+	//fifth input is the stride of our vertices which is just the amount of data between each vertex //should be same for all attributes
 	//sixth input is called the offset which is a pointer to where our vertices begin in the array but since our vertices begin right at the start of the array were gonna give this weird pointer void
 	glEnableVertexAttribArray(0); //enable the vertex attribarray and give it 0 because thats the position of our vertex attribute
 	// color attribute
@@ -311,6 +250,61 @@ int main(){
 	//basically unbinds it by binding it to 0
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
+	//textures
+
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	//first input is how many textures to load
+	//second input is where to load the textures
+	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	
+	//sets the configuration only to the currently bound texture object
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	//first argument is the texture type which is 2d
+	//second argument says what option we want to set and for which axis (s, t, r is the same as x, y, z)
+	//third argument is the texture wrapping mode //required
+
+	//basically the texture coordinates will not be exactly the same as the texture pixels so we use this to configure how it estimates it
+	//its called texture sampling
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//min is the setting for when it scales downwards
+	//mag is the setting for when it scales upwards
+	//GL_NEAREST just takes the nearest pixel's color (looks pixelated)
+	//GL_LINEAR takes the interpolated color of the four nearest pixels (looks better but prolly laggier)
+
+	printf("before stb stuff");
+
+	//stb stuff
+	int imageWidth, imageHeight, nrChannels;
+	unsigned char *data = stbi_load("resources/textures/cat.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
+	//end
+
+	printf("after stb stuff");
+
+	if (data){
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		//first input is type of texture to generate into (this means GL_TEXTURE_1D and 3D will not be affected) //generates into the current GL_TEXTURE_2D object
+		//The second argument specifies the mipmap level for which we want to create a texture for if you want to set each mipmap level manually, but we'll leave it at the base level which is 0.
+		//third input is what color format we want (should be the same as the image color format)
+		//fourth and fifth inputs are for what we want the width and height of the resulting texture to be //we will just use the width and height we got from the texture before
+		//sixth input should alawyas be 0 (legacy stuff)
+		//The 7th and 8th argument specify the format and datatype of the source image. We loaded the image with RGB values and stored them as chars (bytes) so we'll pass in the corresponding values.
+		//The last argument is the actual image data.
+		//once this is called the currently bound texture object now stores the texture image 
+		glGenerateMipmap(GL_TEXTURE_2D); //automatically genereates all the mipmaps for the current texture
+	}else{
+		printf("texture was not found in files");
+	}
+
+	stbi_image_free(data); //free data used by the data variable
+
 
 
 

@@ -10,7 +10,7 @@
 #include "include/GLFW/glfw3.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb/stb_image.h"
-#include <cglm/struct.h>
+#include <cglm/cglm.h>
 
 
 // Vertex Shader source code
@@ -20,9 +20,10 @@ const char* vertexShaderSource = "#version 410 core\n"
 "layout (location = 2) in vec2 aTexCoord;\n" //texture coord
 "out vec3 ourColor;\n" // output a color to the fragment shader
 "out vec2 TexCoord;\n" //output a texcoord to the fragment shader
+"uniform mat4 transform;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = vec4(aPos, 1.0);\n" // see how we directly give a vec3 to vec4's constructor
+"   gl_Position = transform * vec4(aPos, 1.0);\n" // see how we directly give a vec3 to vec4's constructor
 "	ourColor = aColor;\n" // set ourColor to the input color we got from the vertex data
 "	TexCoord = aTexCoord;\n" //set texcoord to atexcoord
 "}\0";
@@ -71,14 +72,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				}else{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}
-				break;
-			case GLFW_KEY_E:
-				{}
-				vec4s vec = {1.0f, 0.0f, 0.0f, 1.0f};
-				mat4s trans = glms_mat4_identity();
-				glm_translate(trans, (float*){1, 1, 0});
-				glm_mat4_mulv(trans, vec);
-				printf("%f, %f, %f, %f", vec.x, vec.y, vec.z, vec.w);
 				break;
 		}
 	}   
@@ -328,7 +321,8 @@ int main(){
 	//while loop
 
 
-
+	
+	
 
     while (!glfwWindowShouldClose(window)){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
@@ -338,7 +332,17 @@ int main(){
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
 
 
-		
+		//transformations
+
+
+		mat4 transform;
+		glm_mat4_identity(transform);
+		glm_translate(transform, (vec3){0.5f, 0.5f, 0.0f});
+		glm_rotate(transform, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)transform);
+
+
 
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

@@ -1,1 +1,1 @@
-hello world
+must install glfw using brew

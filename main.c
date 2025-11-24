@@ -10,10 +10,7 @@
 #include "include/GLFW/glfw3.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb/stb_image.h"
-#include "include/glm/glm.hpp"
-#include "include/glm/gtc/matrix_transform.hpp"
-#include "include/glm/gtc/type_ptr.hpp"
-
+#include <cglm/struct.h>
 
 
 // Vertex Shader source code
@@ -74,6 +71,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				}else{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}
+				break;
+			case GLFW_KEY_E:
+				{}
+				vec4s vec = {1.0f, 0.0f, 0.0f, 1.0f};
+				mat4s trans = glms_mat4_identity();
+				glm_translate(trans, (float*){1, 1, 0});
+				glm_mat4_mulv(trans, vec);
+				printf("%f, %f, %f, %f", vec.x, vec.y, vec.z, vec.w);
 				break;
 		}
 	}   

@@ -16,15 +16,17 @@
 // Vertex Shader source code
 const char* vertexShaderSource = "#version 410 core\n"
 "layout (location = 0) in vec3 aPos;\n" // the position variable has attribute position 0
-"layout (location = 1) in vec3 aColor;\n" // the color variable has attribute position 1
-"layout (location = 2) in vec2 aTexCoord;\n" //texture coord
-"out vec3 ourColor;\n" // output a color to the fragment shader
+//"layout (location = 1) in vec3 aColor;\n" // the color variable has attribute position 1
+"layout (location = 1) in vec2 aTexCoord;\n" //texture coord
+//"out vec3 ourColor;\n" // output a color to the fragment shader
 "out vec2 TexCoord;\n" //output a texcoord to the fragment shader
-"uniform mat4 transform;\n"
+"uniform mat4 model;\n"
+"uniform mat4 view;\n"
+"uniform mat4 projection;\n"
 "void main()\n"
-"{\n"
-"   gl_Position = transform * vec4(aPos, 1.0);\n" // see how we directly give a vec3 to vec4's constructor
-"	ourColor = aColor;\n" // set ourColor to the input color we got from the vertex data
+"{\n" // note that we read the multiplication from right to left //so the first one we multiply is on the right (model matrix)
+"   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+//"	ourColor = aColor;\n" // set ourColor to the input color we got from the vertex data
 "	TexCoord = aTexCoord;\n" //set texcoord to atexcoord
 "}\0";
 
@@ -33,7 +35,7 @@ const char* vertexShaderSource = "#version 410 core\n"
 //Fragment Shader source code
 const char* fragmentShaderSource = "#version 410 core\n"
 "out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
+//"in vec3 ourColor;\n"
 "in vec2 TexCoord;\n"
 "uniform sampler2D texture1;\n"
 "void main()\n"
@@ -121,7 +123,7 @@ int main(){
 
 
 
-    GLFWwindow *window = glfwCreateWindow(1000, 1000, "snake", NULL, NULL); //create a window named "snake" thats 1000x1000 pixels
+    GLFWwindow *window = glfwCreateWindow(800, 600, "snake", NULL, NULL); //create a window named "snake" thats 1000x1000 pixels
     if (!window){ //checks if the window was created
         printf("window creation failed");
     }else{
@@ -194,7 +196,7 @@ int main(){
 
 	//vertices
 
-
+	/*
 	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
 		//positions				//colors         	//texture coords (0,0 is at the bottom left)
 		0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 0.0f, 	1.0f, 1.0f, //top right
@@ -202,6 +204,53 @@ int main(){
 		-0.05f, -0.05f, 0.0f, 	0.0f, 0.0f, 1.0f, 	0.0f, 0.0f, //bottom left
 		-0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 1.0f, 	0.0f, 1.0f //top left
 	};
+	*/
+
+	GLfloat vertices[] = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	};
+
+	
 
 
 	//indices
@@ -244,7 +293,7 @@ int main(){
 
 	//configuration of VAO
 	//position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	//first input is the index of the vertex attribute we want to use //a vertex attribute is a way of communicating with a vertex shader from the outside
 	//second input is how many values we have per vertex which is 3 in our case becaus we have 3 floats
 	//third input is what type of values we have
@@ -253,11 +302,13 @@ int main(){
 	//sixth input is called the offset which is a pointer to where our vertices begin in the array but since our vertices begin right at the start of the array were gonna give this weird pointer void
 	glEnableVertexAttribArray(0); //enable the vertex attribarray and give it 0 because thats the position of our vertex attribute
 	// color attribute
+	/*
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	*/
 	//texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //makes sure we dont accidentally change a VBO or VAO with a function
@@ -316,6 +367,7 @@ int main(){
 
 
 
+	glEnable(GL_DEPTH_TEST);  
 
 
 	//while loop
@@ -326,26 +378,56 @@ int main(){
 
     while (!glfwWindowShouldClose(window)){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
-		glClear(GL_COLOR_BUFFER_BIT); //tell gl to execute the command //uses the current state
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shaderProgram); //activates the shader
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
 
 
-		//transformations
+		//matrix stuff
+
+		
+		//model matrix (local coords to global coords)
+
+		mat4 model;
+		glm_mat4_identity(model);
+		glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
+		glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
+		glm_scale(model, (vec3){1.0, 1.0, 1.0}); 
+
+		unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model"); //send matrix to the shader thru uniforms
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
 
 
-		mat4 transform;
-		glm_mat4_identity(transform);
-		glm_translate(transform, (vec3){0.5f, 0.5f, 0.0f});
-		glm_rotate(transform, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
-		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)transform);
+
+
+
+		//view matrix (moving coords to be in view of the user
+
+		mat4 view;
+		glm_mat4_identity(view);
+		// note that we're translating the scene in the reverse direction of where we want to move
+		glm_translate(view, (vec3){0.0f, 0.0f, -4.0f});
+
+		unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view"); //send matrix to the shader thru uniforms
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
 
 
 
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		//projection matrix (make things look smaller the farther they are)
+
+		mat4 projection; //dont need identity matrix for this ig
+		glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
+
+		unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection"); //send matrix to the shader thru uniforms
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, (float *)projection);
+
+
+
+
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		/*first input is the type of primitive we want to use
 		second input is the starting index of the vertices, 0
 		third input is the amount of vertices we want to draw

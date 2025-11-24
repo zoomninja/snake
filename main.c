@@ -169,7 +169,7 @@ int main(){
 
 	//stb stuff
 	int imageWidth, imageHeight, nrChannels;
-	unsigned char *data = stbi_load("resources/textures/container.jpg", &imageWidth, &imageHeight, &nrChannels, 0); 
+	unsigned char *data = stbi_load("resources/textures/cat.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
 	//end
 
 	if (data){

@@ -7,7 +7,7 @@ all: run
 
 # Build rule
 $(OUT): $(SRC)
-	$(CC) $(SRC) -o $(OUT) -L/opt/homebrew/lib -Llib -lglad -lglfw -Iinclude
+	$(CC) $(SRC) -o $(OUT) -L/opt/homebrew/lib -Llib -lglad -lglfw -Wall
 
 # Run rule
 run: $(OUT)

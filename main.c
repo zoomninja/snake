@@ -10,6 +10,9 @@
 #include "include/GLFW/glfw3.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb/stb_image.h"
+#include "include/glm/glm.hpp"
+#include "include/glm/gtc/matrix_transform.hpp"
+#include "include/glm/gtc/type_ptr.hpp"
 
 
 
@@ -34,10 +37,10 @@ const char* fragmentShaderSource = "#version 410 core\n"
 "out vec4 FragColor;\n"
 "in vec3 ourColor;\n"
 "in vec2 TexCoord;\n"
-"uniform sampler2D ourTexture;\n"
+"uniform sampler2D texture1;\n"
 "void main()\n"
 "{\n"
-"   FragColor = texture(ourTexture, TexCoord);\n" //do this to combine our color with texture color: FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);  
+"   FragColor = texture(texture1, TexCoord);\n" //do this to combine our color with texture color: FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1.0);  
 "}\n\0";
 
 
@@ -110,29 +113,14 @@ int main(){
 	//in this case we are using core which means we can only use modern functions
 
 
-	//vertices
-
-
-	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
-		//positions				//colors         	//texture coords (0,0 is at the bottom left)
-		0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 0.0f, 	1.0f, 1.0f, //top right
-		0.05f, -0.05f, 0.0f, 	0.0f, 1.0f, 0.0f, 	1.0f, 0.0f, //bottom right
-		-0.05f, -0.05f, 0.0f, 	0.0f, 0.0f, 1.0f, 	0.0f, 0.0f//bottom left
-		-0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 1.0f, 	0.0f, 1.0f//top left
-	};
-
-
-	//indices
-
-
-	GLuint indices[] = {
-		3, 0, 1,
-		1, 2, 3
-	};
+	
 
 
 
 	//create window
+
+
+
 
 
     GLFWwindow *window = glfwCreateWindow(1000, 1000, "snake", NULL, NULL); //create a window named "snake" thats 1000x1000 pixels
@@ -142,12 +130,13 @@ int main(){
 		printf("window created");
 	}
 	
+	glfwMakeContextCurrent(window); //sets the current context to the window
 	//set callbacks
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
-	glfwMakeContextCurrent(window); //sets the current context to the window
+	
 
 
 	//load opengl //make sure this is after glfwMakeContextCurrent
@@ -202,6 +191,34 @@ int main(){
 
 
 
+
+
+
+	//vertices
+
+
+	GLfloat vertices[] = { //x position, y position, z position //its on a normalized coordinate grid
+		//positions				//colors         	//texture coords (0,0 is at the bottom left)
+		0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 0.0f, 	1.0f, 1.0f, //top right
+		0.05f, -0.05f, 0.0f, 	0.0f, 1.0f, 0.0f, 	1.0f, 0.0f, //bottom right
+		-0.05f, -0.05f, 0.0f, 	0.0f, 0.0f, 1.0f, 	0.0f, 0.0f, //bottom left
+		-0.05f, 0.05f, 0.0f, 	1.0f, 0.0f, 1.0f, 	0.0f, 1.0f //top left
+	};
+
+
+	//indices
+
+
+	GLuint indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+
+
+	//objects
+
+
 	GLuint VAO, VBO, EBO; //vertex buffer object to send stuff from cpu to gpu in big batches
 	//index bufffer is EBO
 	//vertex array object basically tells opengl what VBOs to use and where to find them
@@ -215,7 +232,6 @@ int main(){
 	glBindVertexArray(VAO); //binds the current vertex array at the VAO
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); //binds the current "GL_ARRAY_BUFFER" as the VBO
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //to store the vertices in the VBO
 	//last param is the way you want the vertices to be used
 	//STREAM means the vertices will be modified once and used a few times 
@@ -259,7 +275,6 @@ int main(){
 	glGenTextures(1, &texture);
 	//first input is how many textures to load
 	//second input is where to load the textures
-	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	
@@ -279,14 +294,10 @@ int main(){
 	//GL_NEAREST just takes the nearest pixel's color (looks pixelated)
 	//GL_LINEAR takes the interpolated color of the four nearest pixels (looks better but prolly laggier)
 
-	printf("before stb stuff");
-
 	//stb stuff
 	int imageWidth, imageHeight, nrChannels;
-	unsigned char *data = stbi_load("resources/textures/cat.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
+	unsigned char *data = stbi_load("resources/textures/container.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
 	//end
-
-	printf("after stb stuff");
 
 	if (data){
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -317,8 +328,8 @@ int main(){
     while (!glfwWindowShouldClose(window)){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
 		glClear(GL_COLOR_BUFFER_BIT); //tell gl to execute the command //uses the current state
-		glUseProgram(shaderProgram); //activates the shader
 		glBindTexture(GL_TEXTURE_2D, texture);
+		glUseProgram(shaderProgram); //activates the shader
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
 
 

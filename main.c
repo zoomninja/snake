@@ -19,7 +19,7 @@ const char* vertexShaderSource = "#version 410 core\n"
 "layout (location = 1) in vec3 aColor;\n" // the color variable has attribute position 1
 "layout (location = 2) in vec2 aTexCoord;\n" //texture coord
 "out vec3 ourColor;\n" // output a color to the fragment shader
-"out vec2 TexCoord;\n" //output a texcoord to the fragment shader as well
+"out vec2 TexCoord;\n" //output a texcoord to the fragment shader
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos, 1.0);\n" // see how we directly give a vec3 to vec4's constructor
@@ -130,7 +130,6 @@ int main(){
 		1, 2, 3
 	};
 
-
 	//textures
 
 	float texCoords[] = { //0, 0 is in the bottom left corner
@@ -167,10 +166,14 @@ int main(){
 	//mipmap stuff look at the tutorial for more info
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
+	printf("before stb stuff");
+
 	//stb stuff
 	int imageWidth, imageHeight, nrChannels;
 	unsigned char *data = stbi_load("resources/textures/cat.jpg", &imageWidth, &imageHeight, &nrChannels, 0);
 	//end
+
+	printf("after stb stuff");
 
 	if (data){
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);

@@ -45,6 +45,29 @@ const char* fragmentShaderSource = "#version 410 core\n"
 "}\n\0";
 
 
+
+
+//variable definitions
+
+
+
+
+
+vec3 cp; //cross product
+vec3 av; //added vector
+vec3 subv; //subtracted vector
+vec3 sv; //scaled vector
+vec3 mv; //multiplied vector
+
+vec3 cameraPos = {0.0f, 0.0f, 0.0f};
+vec3 cameraFront = {0.0f, 0.0f, -1.0f};
+vec3 cameraUp = {0.0f, 1.0f, 0.0f};
+float cameraSpeed = 0.05f;
+
+
+
+
+
 //shader related functions
 
 
@@ -56,7 +79,34 @@ void setUniform(GLuint shaderProgram, const char* uniformName, const mat4 matrix
 
 
 
+//process input
 
+void processInput(GLFWwindow* window){
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+		glm_vec3_scale(cameraFront, cameraSpeed, sv);
+		glm_vec3_add(cameraPos, sv, av);
+		glm_vec3_copy(av, cameraPos);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+		glm_vec3_scale(cameraFront, cameraSpeed, sv);
+		glm_vec3_sub(cameraPos, sv, subv);
+		glm_vec3_copy(subv, cameraPos);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+		glm_vec3_cross(cameraFront, cameraUp, cp);
+		glm_vec3_normalize(cp);
+		glm_vec3_scale(cp, cameraSpeed, sv);
+		glm_vec3_sub(cameraPos, sv, subv);
+		glm_vec3_copy(subv, cameraPos);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+		glm_vec3_cross(cameraFront, cameraUp, cp);
+		glm_vec3_normalize(cp);
+		glm_vec3_scale(cp, cameraSpeed, sv);
+		glm_vec3_add(cameraPos, sv, av);
+		glm_vec3_copy(av, cameraPos);
+	}
+}
 
 
 
@@ -89,7 +139,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				}
 				break;
 		}
-	}   
+	}
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -107,7 +157,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 //main code
 
 
-vec3 cp;
+
 
 
 
@@ -393,18 +443,8 @@ int main(){
 
 	//camera stuff
 
+	
 
-	vec3 cameraPos = {0.0f, 0.0f, 3.0f};
-	vec3 cameraTarget = {0.0f, 0.0f, 0.0f};
-	vec3 cameraDireciton; //camera direction is not the best name cuz its actually pointing the opposite way
-	glm_vec3_normalize_to((float*)(cameraPos - cameraTarget), cameraDireciton);
-	vec3 up = {0.0f, 1.0f, 0.0f};
-	vec3 cameraRight;
-	glm_cross(cameraDireciton, up, cp);
-	glm_vec3_normalize_to(cp, cameraRight);
-	vec3 cameraUp;
-	glm_cross(cameraDireciton, cameraRight, cp);
-	glm_vec3_normalize_to(cp, cameraUp);
 	
 	
 	//matrix stuff
@@ -419,12 +459,11 @@ int main(){
 
 
 	//while loop
-
-
-	
 	
 
     while (!glfwWindowShouldClose(window)){
+		processInput(window);
+
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -441,21 +480,25 @@ int main(){
 
 
 		
-        setUniform(shaderProgram, "projection", projection);
+        
 
 		//view matrix (moving coords to be in view of the user)
 		
-		const float radius = 10.0f;
-		float camX = sin(glfwGetTime()) * radius;
-		float camZ = cos(glfwGetTime()) * radius;
+		
 		mat4 view;
 		glm_mat4_identity(view);
-		//glm_lookat((vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view);
+		glm_vec3_add(cameraPos, cameraFront, av);
+		glm_lookat(cameraPos, av, cameraUp, view);
 		//first argument is the camera position
 		//second is target to look at
 		//third is an up vector
 		//fourth is where to store this matrix
         setUniform(shaderProgram, "view", view);
+
+
+		//projection matrix
+
+		setUniform(shaderProgram, "projection", projection);
 
 
 		//model matrix

@@ -62,7 +62,18 @@ vec3 mv; //multiplied vector
 vec3 cameraPos = {0.0f, 0.0f, 0.0f};
 vec3 cameraFront = {0.0f, 0.0f, -1.0f};
 vec3 cameraUp = {0.0f, 1.0f, 0.0f};
-float cameraSpeed = 0.05f;
+
+
+bool firstMouse = true;
+float lastX = 400;
+float lastY = 300; //depends on the size of the window (should be in the middle of the screen)
+float yaw = -90.0f;
+float pitch = 0.0f;
+const float sensitivity = 0.1f;
+
+const float cameraSpeed = 2.5f;
+float deltaTime = 0.0f;	// Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
 
 
 
@@ -82,27 +93,29 @@ void setUniform(GLuint shaderProgram, const char* uniformName, const mat4 matrix
 //process input
 
 void processInput(GLFWwindow* window){
+	// Don't mutate the base speed; compute a per-frame velocity using deltaTime.
+	float velocity = cameraSpeed * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-		glm_vec3_scale(cameraFront, cameraSpeed, sv);
+		glm_vec3_scale(cameraFront, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-		glm_vec3_scale(cameraFront, cameraSpeed, sv);
+		glm_vec3_scale(cameraFront, velocity, sv);
 		glm_vec3_sub(cameraPos, sv, subv);
 		glm_vec3_copy(subv, cameraPos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
 		glm_vec3_cross(cameraFront, cameraUp, cp);
 		glm_vec3_normalize(cp);
-		glm_vec3_scale(cp, cameraSpeed, sv);
+		glm_vec3_scale(cp, velocity, sv);
 		glm_vec3_sub(cameraPos, sv, subv);
 		glm_vec3_copy(subv, cameraPos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
 		glm_vec3_cross(cameraFront, cameraUp, cp);
 		glm_vec3_normalize(cp);
-		glm_vec3_scale(cp, cameraSpeed, sv);
+		glm_vec3_scale(cp, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
 	}
@@ -140,6 +153,41 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				break;
 		}
 	}
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+	if (firstMouse) // initially set to true
+	{
+    	lastX = xpos;
+    	lastY = ypos;
+    	firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed since y-coordinates range from bottom to top
+	lastX = xpos;
+	lastY = ypos;
+
+	
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw   += xoffset;
+	pitch += yoffset;
+
+	if(pitch > 89.0f){
+		pitch =  89.0f;
+	}
+	if(pitch < -89.0f){
+		pitch = -89.0f;
+	}
+
+	vec3 cameraDir;
+	cameraDir[0] = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
+	cameraDir[1] = sin(glm_rad(pitch));
+	cameraDir[2] = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
+	glm_vec3_normalize(cameraDir);
+	glm_vec3_copy(cameraDir, cameraFront);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -197,6 +245,9 @@ int main(){
 	//set callbacks
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	//set mouse mode
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
 
 	
@@ -267,7 +318,7 @@ int main(){
 	*/
 
 	GLfloat vertices[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, //cube
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -307,7 +358,20 @@ int main(){
      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.01f, 0.05f, 0.0f, 0.0f, 0.0f, //crosshair
+	0.01f, 0.05f, 0.0f, 0.0f, 0.0f, 
+	0.01f, 0.01f, 0.0f, 0.0f, 0.0f, 
+	0.05f, 0.01f, 0.0f, 0.0f, 0.0f, 
+	0.05f, -0.01f, 0.0f, 0.0f, 0.0f, 
+	0.01f, -0.01f, 0.0f, 0.0f, 0.0f, 
+	0.01f, -0.05f, 0.0f, 0.0f, 0.0f, 
+	-0.01f, -0.05f, 0.0f, 0.0f, 0.0f, 
+	-0.01f, -0.01f, 0.0f, 0.0f, 0.0f, 
+	-0.05f, -0.01f, 0.0f, 0.0f, 0.0f, 
+	-0.05f, 0.01f, 0.0f, 0.0f, 0.0f, 
+	-0.01f, 0.01f, 0.0f, 0.0f, 0.0f
 	};
 
 	vec3 cubePositions[] = { //specifies cubes' locations in world space
@@ -330,7 +394,7 @@ int main(){
 
 
 	GLuint indices[] = {
-		0, 1, 3,
+		0, 1, 3, //crosshair
 		1, 2, 3
 	};
 
@@ -462,6 +526,9 @@ int main(){
 	
 
     while (!glfwWindowShouldClose(window)){
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function

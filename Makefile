@@ -1,5 +1,5 @@
 CC = clang
-SRC = main.c
+SRC = src/main.c src/foo.c
 OUT = main
 
 # Default target: build and run
@@ -7,7 +7,7 @@ all: run
 
 # Build rule
 $(OUT): $(SRC)
-	$(CC) $(SRC) -o $(OUT) -L/opt/homebrew/lib -Llib -lglad -lglfw -I/opt/homebrew/include
+	$(CC) $(SRC) -o $(OUT) -L/opt/homebrew/lib -Llib -lglad -lglfw
 
 # Run rule
 run: $(OUT)

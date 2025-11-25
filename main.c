@@ -76,6 +76,9 @@ const float cameraSpeed = 2.5f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
+float gravity = 1.0f;
+float upVelocity = 0.0f;
+
 
 
 
@@ -535,17 +538,27 @@ int main(){
 		lastFrame = currentFrame;
 		processInput(window);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
+		glClearColor(0.5f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shaderProgram); //activates the shader
 		glBindVertexArray(VAO); //binds the VAO to tell opengl that we want to use this one //not really necessary because we only have one object and one VAO but its good to get used to this
 
 
+
+
+
+		//gravity
+
+
+
+
+
+
+
+
+
 		//matrix stuff
-
-
-
 
 		
 
@@ -576,15 +589,15 @@ int main(){
 
 		//model matrix
 		
-		for (int i = 0; i < 10; i++){
-			mat4 model;
-			glm_mat4_identity(model);
-            glm_translate(model, cubePositions[i]);
-            float angle = 20.0f * (i+1) * glfwGetTime();
-            glm_rotate(model, glm_rad(angle), (vec3){1.0f, 0.3f, 0.5f});
-            setUniform(shaderProgram, "model", model);
+		for (int x = 0; x < 10; x++){
+			for (int y = 0; y < 10; y++){
+				mat4 model;
+				glm_mat4_identity(model);
+            	glm_translate(model, (vec3){x, 0.0f, y});
+            	setUniform(shaderProgram, "model", model);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            	glDrawArrays(GL_TRIANGLES, 0, 36);
+			}
 		}
 		
 		/*first input is the type of primitive we want to use

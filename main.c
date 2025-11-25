@@ -70,6 +70,7 @@ float lastY = 300; //depends on the size of the window (should be in the middle 
 float yaw = -90.0f;
 float pitch = 0.0f;
 const float sensitivity = 0.1f;
+float fov = 70.0f;
 
 const float cameraSpeed = 2.5f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
@@ -190,6 +191,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 	glm_vec3_copy(cameraDir, cameraFront);
 }
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    fov -= (float)yoffset;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 90.0f)
+        fov = 90.0f; 
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -246,6 +256,7 @@ int main(){
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback); 
 	//set mouse mode
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
@@ -505,18 +516,11 @@ int main(){
 
 
 
-	//camera stuff
 
 	
 
 	
 	
-	//matrix stuff
-
-	//projection matrix (make things look smaller the farther they are)
-
-	mat4 projection; //dont need identity matrix for this ig
-	glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection); //best practice not to set the projection matrix every frame
 
 
 	glEnable(GL_DEPTH_TEST); //enable depth buffer
@@ -565,6 +569,8 @@ int main(){
 
 		//projection matrix
 
+		mat4 projection; //dont need identity matrix for this ig
+		glm_perspective(glm_rad(fov), 800.0f / 600.0f, 0.1f, 100.0f, projection);
 		setUniform(shaderProgram, "projection", projection);
 
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
@@ -42,6 +43,24 @@ const char* fragmentShaderSource = "#version 410 core\n"
 "{\n"
 "   FragColor = texture(texture1, TexCoord);\n" //do this to combine our color with texture color: FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1.0);  
 "}\n\0";
+
+
+//shader related functions
+
+
+
+void setUniform(GLuint shaderProgram, const char* uniformName, const mat4 matrix){
+	unsigned int uniformLoc = glGetUniformLocation(shaderProgram, uniformName); //send matrix to the shader thru uniforms
+	glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, (float *)matrix);
+}
+
+vec3* crossProduct(const v1, const v2){
+	vec3 result;
+	glm_cross(v1, v2, result);
+	return result;
+}
+
+
 
 
 
@@ -102,7 +121,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 int main(){
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()){
-        printf("glwf init failed");
+        printf("glwf init failed\n");
     }
 
 	//configure opengl
@@ -125,9 +144,9 @@ int main(){
 
     GLFWwindow *window = glfwCreateWindow(800, 600, "snake", NULL, NULL); //create a window named "snake" thats 1000x1000 pixels
     if (!window){ //checks if the window was created
-        printf("window creation failed");
+        printf("window creation failed\n");
     }else{
-		printf("window created");
+		printf("window created\n");
 	}
 	
 	glfwMakeContextCurrent(window); //sets the current context to the window
@@ -250,6 +269,19 @@ int main(){
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
+	vec3 cubePositions[] = { //specifies cubes' locations in world space
+    { 0.0f,  0.0f,  0.0f}, 
+    { 2.0f,  5.0f, -15.0f}, 
+    {-1.5f, -2.2f, -2.5f},  
+    {-3.8f, -2.0f, -12.3f},  
+    { 2.4f, -0.4f, -3.5f},  
+    {-1.7f,  3.0f, -7.5f},  
+    { 1.3f, -2.0f, -2.5f},  
+    { 1.5f,  2.0f, -2.5f}, 
+    { 1.5f,  0.2f, -1.5f}, 
+    {-1.3f,  1.0f, -1.5f} 
+	};
+
 	
 
 
@@ -367,7 +399,21 @@ int main(){
 
 
 
-	glEnable(GL_DEPTH_TEST);  
+
+	//matrix stuff
+
+
+	vec3 cameraPos = {0.0f, 0.0f, 3.0f};
+	vec3 cameraTarget = {0.0f, 0.0f, 0.0f};
+	vec3 cameraDireciton; //camera direction is not the best name cuz its actually pointing the opposite way
+	glm_vec3_normalize_to(cameraPos - cameraTarget, cameraDireciton);
+	vec3 up = {0.0f, 1.0f, 0.0f};
+	vec3 cameraRight;
+	glm_vec3_normalize_to(crossProduct(cameraDireciton, up), cameraRight);
+	vec3 cameraUp;
+	glm_vec3_normalize_to(crossProduct(cameraDireciton, cameraRight), cameraUp);
+
+	glEnable(GL_DEPTH_TEST); //enable depth buffer
 
 
 	//while loop
@@ -386,48 +432,40 @@ int main(){
 
 		//matrix stuff
 
+
+
+
 		
-		//model matrix (local coords to global coords)
-
-		mat4 model;
-		glm_mat4_identity(model);
-		glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
-		glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
-		glm_scale(model, (vec3){1.0, 1.0, 1.0}); 
-
-		unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model"); //send matrix to the shader thru uniforms
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
-
-
-
-
-
-		//view matrix (moving coords to be in view of the user
-
-		mat4 view;
-		glm_mat4_identity(view);
-		// note that we're translating the scene in the reverse direction of where we want to move
-		glm_translate(view, (vec3){0.0f, 0.0f, -4.0f});
-
-		unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view"); //send matrix to the shader thru uniforms
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
-
-
 
 
 		//projection matrix (make things look smaller the farther they are)
 
 		mat4 projection; //dont need identity matrix for this ig
-		glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
+		glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection); //best practice not to set the projection matrix every frame
+        setUniform(shaderProgram, "projection", projection);
 
-		unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection"); //send matrix to the shader thru uniforms
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, (float *)projection);
+		//view matrix (moving coords to be in view of the user)
+		
+		mat4 view;
+		glm_mat4_identity(view);
+		// note that we're translating the scene in the reverse direction of where we want to move
+		glm_translate(view, (vec3){0.0f, 0.0f, -4.0f});
+        setUniform(shaderProgram, "view", view);
 
 
+		//model matrix
+		
+		for (int i = 0; i < 10; i++){
+			mat4 model;
+			glm_mat4_identity(model);
+            glm_translate(model, cubePositions[i]);
+            float angle = 20.0f * (i+1) * glfwGetTime();
+            glm_rotate(model, glm_rad(angle), (vec3){1.0f, 0.3f, 0.5f});
+            setUniform(shaderProgram, "model", model);
 
-
-
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+		
 		/*first input is the type of primitive we want to use
 		second input is the starting index of the vertices, 0
 		third input is the amount of vertices we want to draw

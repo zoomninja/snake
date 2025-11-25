@@ -54,12 +54,6 @@ void setUniform(GLuint shaderProgram, const char* uniformName, const mat4 matrix
 	glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, (float *)matrix);
 }
 
-vec3* crossProduct(const v1, const v2){
-	vec3 result;
-	glm_cross(v1, v2, result);
-	return result;
-}
-
 
 
 
@@ -113,7 +107,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 //main code
 
 
-
+vec3 cp;
 
 
 
@@ -207,9 +201,6 @@ int main(){
 
 	glDeleteShader(vertexShader); //deletes the shaders because theyre already in the program itself
 	glDeleteShader(fragmentShader);
-
-
-
 
 
 
@@ -400,18 +391,29 @@ int main(){
 
 
 
-	//matrix stuff
+	//camera stuff
 
 
 	vec3 cameraPos = {0.0f, 0.0f, 3.0f};
 	vec3 cameraTarget = {0.0f, 0.0f, 0.0f};
 	vec3 cameraDireciton; //camera direction is not the best name cuz its actually pointing the opposite way
-	glm_vec3_normalize_to(cameraPos - cameraTarget, cameraDireciton);
+	glm_vec3_normalize_to((float*)(cameraPos - cameraTarget), cameraDireciton);
 	vec3 up = {0.0f, 1.0f, 0.0f};
 	vec3 cameraRight;
-	glm_vec3_normalize_to(crossProduct(cameraDireciton, up), cameraRight);
+	glm_cross(cameraDireciton, up, cp);
+	glm_vec3_normalize_to(cp, cameraRight);
 	vec3 cameraUp;
-	glm_vec3_normalize_to(crossProduct(cameraDireciton, cameraRight), cameraUp);
+	glm_cross(cameraDireciton, cameraRight, cp);
+	glm_vec3_normalize_to(cp, cameraUp);
+	
+	
+	//matrix stuff
+
+	//projection matrix (make things look smaller the farther they are)
+
+	mat4 projection; //dont need identity matrix for this ig
+	glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection); //best practice not to set the projection matrix every frame
+
 
 	glEnable(GL_DEPTH_TEST); //enable depth buffer
 
@@ -438,18 +440,21 @@ int main(){
 		
 
 
-		//projection matrix (make things look smaller the farther they are)
-
-		mat4 projection; //dont need identity matrix for this ig
-		glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection); //best practice not to set the projection matrix every frame
+		
         setUniform(shaderProgram, "projection", projection);
 
 		//view matrix (moving coords to be in view of the user)
 		
+		const float radius = 10.0f;
+		float camX = sin(glfwGetTime()) * radius;
+		float camZ = cos(glfwGetTime()) * radius;
 		mat4 view;
 		glm_mat4_identity(view);
-		// note that we're translating the scene in the reverse direction of where we want to move
-		glm_translate(view, (vec3){0.0f, 0.0f, -4.0f});
+		//glm_lookat((vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 1.0f, 0.0f}, view);
+		//first argument is the camera position
+		//second is target to look at
+		//third is an up vector
+		//fourth is where to store this matrix
         setUniform(shaderProgram, "view", view);
 
 

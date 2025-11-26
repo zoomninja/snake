@@ -43,6 +43,16 @@ void setUniformVec3(GLuint program, const char* uniformName, const vec3 vector){
 	glUniform3fv(uniformLoc, 1, vector);
 }
 
+void setUniformFloat(GLuint program, const char* uniformName, const float num){
+	unsigned int uniformLoc = glGetUniformLocation(program, uniformName); //send float to the shader thru uniforms
+	glUniform1f(uniformLoc, num);
+}
+
+void setUniformInt(GLuint program, const char* uniformName, const int num){
+	unsigned int uniformLoc = glGetUniformLocation(program, uniformName); //send int to the shader thru uniforms
+	glUniform1i(uniformLoc, num);
+}
+
 void loadShaders(){
     const char *vertexSource = loadShaderSource("src/shaders/shader.vert");
     const char *fragmentSource = loadShaderSource("src/shaders/shader.frag");

@@ -13,6 +13,9 @@
 #include "../include/stb/stb_image.h"
 #include "../include/cglm/cglm.h"
 #include "../include/shader.h"
+#include "../include/assimp/cimport.h" // For the C API functions
+#include "../include/assimp/scene.h"   // For aiScene, aiMesh, etc.
+#include "../include/assimp/postprocess.h" // For aiProcess_... flags
 
 
 
@@ -46,8 +49,15 @@ const float cameraSpeed = 2.5f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-float gravity = 1.0f;
+float gravity = 1.0f; //per second
 float upVelocity = 0.0f;
+
+
+vec3 backgroundColor = {0.26f, 0.40f, 0.46f};
+
+float lightConstant = 1.0f;
+float lightLinear = 0.09f;
+float lightQuadratic = 0.032f;
 
 
 
@@ -217,6 +227,15 @@ int main(){
 	-0.01f, 0.01f, 0.0f, 0.0f, 0.0f
 	};
 
+
+
+	vec3 pointLightVertices[] = {
+		{0.0f, 2.0f, 0.0f}, 
+		{10.0f, 2.0f, 0.0f}, 
+		{0.0f, 2.0f, 10.0f}, 
+		{10.0f, 2.0f, 10.0f}
+	};
+
 	
 
 
@@ -324,15 +343,60 @@ int main(){
 
 	glUseProgram(shaderProgram);
 	
-	setUniformFloat(shaderProgram, "light.constant",1.0f);
-	setUniformFloat(shaderProgram, "light.linear", 0.09f);
-	setUniformFloat(shaderProgram, "light.quadratic", 0.032f);
-	setUniformVec3(shaderProgram, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
-	setUniformVec3(shaderProgram, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
-	setUniformVec3(shaderProgram, "light.specular", (vec3){1.0f, 1.0f, 1.0f});
+
+	
+
+	setUniformVec3(shaderProgram, "dirLight.direction", (vec3){-0.2f, -1.0f, -0.3f});
+	setUniformVec3(shaderProgram, "dirLight.ambient", (vec3){0.05f, 0.05f, 0.05f});
+	setUniformVec3(shaderProgram, "dirLight.diffuse", (vec3){0.4f, 0.4f, 0.4f});
+	setUniformVec3(shaderProgram, "dirLight.specular", (vec3){0.5f, 0.5f, 0.5f});
+
+	setUniformVec3(shaderProgram, "pointLights[0].position", pointLightVertices[0]);
+	setUniformVec3(shaderProgram, "pointLights[0].ambient", (vec3){0.05f, 0.05f, 0.05f});
+	setUniformVec3(shaderProgram, "pointLights[0].diffuse", (vec3){0.8f, 0.8f, 0.8f});
+	setUniformVec3(shaderProgram, "pointLights[0].specular", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformFloat(shaderProgram, "pointLights[0].constant", lightConstant);
+	setUniformFloat(shaderProgram, "pointLights[0].linear", lightLinear);
+	setUniformFloat(shaderProgram, "pointLights[0].quadratic", lightQuadratic);
+
+	setUniformVec3(shaderProgram, "pointLights[1].position", pointLightVertices[1]);
+	setUniformVec3(shaderProgram, "pointLights[1].ambient", (vec3){0.05f, 0.05f, 0.05f});
+	setUniformVec3(shaderProgram, "pointLights[1].diffuse", (vec3){0.8f, 0.8f, 0.8f});
+	setUniformVec3(shaderProgram, "pointLights[1].specular", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformFloat(shaderProgram, "pointLights[1].constant", lightConstant);
+	setUniformFloat(shaderProgram, "pointLights[1].linear", lightLinear);
+	setUniformFloat(shaderProgram, "pointLights[1].quadratic", lightQuadratic);
+
+	setUniformVec3(shaderProgram, "pointLights[2].position", pointLightVertices[2]);
+	setUniformVec3(shaderProgram, "pointLights[2].ambient", (vec3){0.05f, 0.05f, 0.05f});
+	setUniformVec3(shaderProgram, "pointLights[2].diffuse", (vec3){0.8f, 0.8f, 0.8f});
+	setUniformVec3(shaderProgram, "pointLights[2].specular", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformFloat(shaderProgram, "pointLights[2].constant", lightConstant);
+	setUniformFloat(shaderProgram, "pointLights[2].linear", lightLinear);
+	setUniformFloat(shaderProgram, "pointLights[2].quadratic", lightQuadratic);
+
+	setUniformVec3(shaderProgram, "pointLights[3].position", pointLightVertices[3]);
+	setUniformVec3(shaderProgram, "pointLights[3].ambient", (vec3){0.05f, 0.05f, 0.05f});
+	setUniformVec3(shaderProgram, "pointLights[3].diffuse", (vec3){0.8f, 0.8f, 0.8f});
+	setUniformVec3(shaderProgram, "pointLights[3].specular", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformFloat(shaderProgram, "pointLights[3].constant", lightConstant);
+	setUniformFloat(shaderProgram, "pointLights[3].linear", lightLinear);
+	setUniformFloat(shaderProgram, "pointLights[3].quadratic", lightQuadratic);
+
+	
+	setUniformFloat(shaderProgram, "spotLight.cutOff", (float)cos(glm_rad(12.5f)));
+	setUniformFloat(shaderProgram, "spotLight.outerCutOff", (float)cos(glm_rad(17.5f)));
+	setUniformVec3(shaderProgram, "spotLight.ambient", (vec3){0.0f, 0.0f, 0.0f});
+	setUniformVec3(shaderProgram, "spotLight.diffuse", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformVec3(shaderProgram, "spotLight.specular", (vec3){1.0f, 1.0f, 1.0f});
+	setUniformFloat(shaderProgram, "spotLight.constant", lightConstant);
+	setUniformFloat(shaderProgram, "spotLight.linear", lightLinear);
+	setUniformFloat(shaderProgram, "spotLight.quadratic", lightQuadratic);
+	
+
 	setUniformFloat(shaderProgram, "material.shininess", 32.0f);
-	setUniformFloat(shaderProgram, "material.diffuse", 0);
-	setUniformFloat(shaderProgram, "material.specular", 1);
+	setUniformInt(shaderProgram, "material.diffuse", 0);
+	setUniformInt(shaderProgram, "material.specular", 1);
 
 
 
@@ -358,17 +422,31 @@ int main(){
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		processInput(window);
-		glClearColor(0.5f, 0.3f, 0.3f, 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
+		glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
 		
 
-		//gravity
 
-		vec3 lightPos = {5.0f, 1.0f, 5.0f};
 
-		lightPos[0] = lightPos[0] + cos(glfwGetTime()) * 2.0f;
-        lightPos[2] = lightPos[2] +  sin(glfwGetTime()) * 2.0f;
+		processInput(window);
+
+
+
+		//physics
+
+		upVelocity -= gravity * deltaTime;
+		glm_vec3_add(cameraPos, (vec3){0.0f, upVelocity, 0.0f}, cameraPos);
+
+		if (cameraPos[1] < 3){
+			upVelocity = 0;
+			cameraPos[1] = 3;
+		}
+
+
+
+
+
+		
 
 
 
@@ -409,12 +487,13 @@ int main(){
 
 		glBindVertexArray(VAO);
 		glUseProgram(shaderProgram); //activates the shader
-		setUniformVec3(shaderProgram, "light.position", cameraPos);
-		setUniformVec3(shaderProgram, "light.direction", cameraFront);
-		setUniformFloat(shaderProgram, "light.cutOff", (float)cos(glm_rad(12.5f)));
+		
+		setUniformVec3(shaderProgram, "spotLight.position", cameraPos);
+		setUniformVec3(shaderProgram, "spotLight.direction", cameraFront);
 		setUniformVec3(shaderProgram, "viewPos", cameraPos);
 		setUniform(shaderProgram, "view", view);
 		setUniform(shaderProgram, "projection", projection);
+		
 		
 		for (int x = 0; x < 10; x++){
 			for (int y = 0; y < 10; y++){
@@ -422,7 +501,6 @@ int main(){
 				glm_mat4_identity(model);
             	glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
             	setUniform(shaderProgram, "model", model);
-
             	glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
@@ -437,14 +515,16 @@ int main(){
 		setUniform(lightShaderProgram, "view", view);
 		setUniform(lightShaderProgram, "projection", projection);
 
+		for (int i = 0; i < 4; i++){
+			mat4 model;
+			glm_mat4_identity(model);
+			glm_translate(model, pointLightVertices[i]);
+			glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
+        	setUniform(lightShaderProgram, "model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 
-
-		mat4 model;
-		glm_mat4_identity(model);
-		glm_translate(model, lightPos);
-		glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
-        setUniform(lightShaderProgram, "model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 		
 		/*first input is the type of primitive we want to use
 		second input is the starting index of the vertices, 0
@@ -522,6 +602,9 @@ void processInput(GLFWwindow* window){
 		glm_vec3_scale(cp, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+		upVelocity = 5.0f;
 	}
 }
 

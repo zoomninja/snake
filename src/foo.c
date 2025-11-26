@@ -54,8 +54,8 @@ void setUniformInt(GLuint program, const char* uniformName, const int num){
 }
 
 void loadShaders(){
-    const char *vertexSource = loadShaderSource("src/shaders/shader.vert");
-    const char *fragmentSource = loadShaderSource("src/shaders/shader.frag");
+    const char *vertexSource = loadShaderSource("src/shaders/shader.vs");
+    const char *fragmentSource = loadShaderSource("src/shaders/shader.fs");
 	
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER); //create the shader into a unsigned int
     glShaderSource(vertexShader, 1, &vertexSource, NULL);
@@ -83,7 +83,7 @@ void loadShaders(){
 
 
 
-    fragmentSource = loadShaderSource("src/shaders/lightShader.frag");
+    fragmentSource = loadShaderSource("src/shaders/lightShader.fs");
 
 
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); //fragment shader

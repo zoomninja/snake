@@ -49,7 +49,7 @@ const float cameraSpeed = 2.5f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-float gravity = 1.0f; //per second
+float gravity = 10.0f; //per second
 float upVelocity = 0.0f;
 
 
@@ -58,6 +58,14 @@ vec3 backgroundColor = {0.26f, 0.40f, 0.46f};
 float lightConstant = 1.0f;
 float lightLinear = 0.09f;
 float lightQuadratic = 0.032f;
+
+
+
+//structs
+
+
+
+
 
 
 
@@ -436,11 +444,11 @@ int main(){
 		//physics
 
 		upVelocity -= gravity * deltaTime;
-		glm_vec3_add(cameraPos, (vec3){0.0f, upVelocity, 0.0f}, cameraPos);
+		glm_vec3_add(cameraPos, (vec3){0.0f, upVelocity * deltaTime, 0.0f}, cameraPos);
 
-		if (cameraPos[1] < 3){
+		if (cameraPos[1] < 1){
 			upVelocity = 0;
-			cameraPos[1] = 3;
+			cameraPos[1] = 1;
 		}
 
 
@@ -604,9 +612,6 @@ void processInput(GLFWwindow* window){
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
 	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-		upVelocity = 5.0f;
-	}
 }
 
 
@@ -646,6 +651,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				}else{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}
+				break;
+			case GLFW_KEY_SPACE:
+				upVelocity = 5.0f;
 				break;
 		}
 	}

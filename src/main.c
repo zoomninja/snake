@@ -61,6 +61,7 @@ float lightQuadratic = 0.032f;
 
 
 
+
 //process input
 
 void processInput(GLFWwindow* window);

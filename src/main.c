@@ -324,6 +324,9 @@ int main(){
 
 	glUseProgram(shaderProgram);
 	
+	setUniformFloat(shaderProgram, "light.constant",1.0f);
+	setUniformFloat(shaderProgram, "light.linear", 0.09f);
+	setUniformFloat(shaderProgram, "light.quadratic", 0.032f);
 	setUniformVec3(shaderProgram, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
 	setUniformVec3(shaderProgram, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
 	setUniformVec3(shaderProgram, "light.specular", (vec3){1.0f, 1.0f, 1.0f});
@@ -399,16 +402,19 @@ int main(){
 
 		//grid of cubes
 
-		glBindVertexArray(VAO);
-		glUseProgram(shaderProgram); //activates the shader
-		setUniformVec3(shaderProgram, "light.position", lightPos);
-		setUniformVec3(shaderProgram, "viewPos", cameraPos);
-		setUniform(shaderProgram, "view", view);
-		setUniform(shaderProgram, "projection", projection);
-        glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
+
+		glBindVertexArray(VAO);
+		glUseProgram(shaderProgram); //activates the shader
+		setUniformVec3(shaderProgram, "light.position", cameraPos);
+		setUniformVec3(shaderProgram, "light.direction", cameraFront);
+		setUniformFloat(shaderProgram, "light.cutOff", (float)cos(glm_rad(12.5f)));
+		setUniformVec3(shaderProgram, "viewPos", cameraPos);
+		setUniform(shaderProgram, "view", view);
+		setUniform(shaderProgram, "projection", projection);
 		
 		for (int x = 0; x < 10; x++){
 			for (int y = 0; y < 10; y++){
@@ -417,7 +423,7 @@ int main(){
             	glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
             	setUniform(shaderProgram, "model", model);
 
-            	glDrawArrays(GL_TRIANGLES, 30, 6);
+            	glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
 

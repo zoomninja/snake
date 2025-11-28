@@ -13,9 +13,9 @@
 #include "../include/stb/stb_image.h"
 #include "../include/cglm/cglm.h"
 #include "../include/shader.h"
-#include "../include/assimp/cimport.h" // For the C API functions
-#include "../include/assimp/scene.h"   // For aiScene, aiMesh, etc.
-#include "../include/assimp/postprocess.h" // For aiProcess_... flags
+#include "../include/mesh.h"
+
+
 
 
 
@@ -425,6 +425,8 @@ int main(){
 
 
 	glEnable(GL_DEPTH_TEST); //enable depth buffer
+
+	struct Model backpack = createModel("resources/models/backpack/backpack.obj");
 	
 
     while (!glfwWindowShouldClose(window)){
@@ -513,6 +515,8 @@ int main(){
             	glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
+
+		drawModel(shaderProgram, backpack);
 
 
 		//light cube

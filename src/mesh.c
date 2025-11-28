@@ -32,7 +32,7 @@ Model loadModel(const char* path){
     model.meshes = malloc(sizeof(Mesh) * model.mesh_count);
     printf("Number of meshes: %d\n", scene->mNumMeshes);
     
-    printf("%d", model.mesh_count);
+    
     for (unsigned int i = 0; i < model.mesh_count; i++){
         const struct aiMesh* ai_mesh = scene->mMeshes[i];
         model.meshes[i] = loadMesh(ai_mesh);
@@ -98,10 +98,10 @@ static Mesh loadMesh(const struct aiMesh* mesh){
     glBindVertexArray(m.VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, m.VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mesh->mNumVertices * vertex_size, vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, m.EBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m.EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, indices, GL_STATIC_DRAW);
 
     int stride = vertex_size * sizeof(float);
 

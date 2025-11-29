@@ -423,7 +423,7 @@ int main(){
 
 
 	Model backpack = loadModel("resources/models/backpack/backpack.obj");
-
+	
 
 
 

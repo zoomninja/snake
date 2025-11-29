@@ -8,7 +8,6 @@
 
 GLuint shaderProgram;
 GLuint lightShaderProgram;
-GLuint modelShaderProgram;
 
 const char* loadShaderSource(const char* filePath);
 void setUniform(GLuint shaderProgram, const char* uniformName, const mat4 matrix);

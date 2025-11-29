@@ -525,7 +525,11 @@ int main(){
 			}
 		}
 
-		drawModel(&backpack);
+		mat4 model;
+		glm_mat4_identity(model);
+        glm_translate(model, (vec3){5.0f, 5.0f, 3.0f});
+        setUniform(shaderProgram, "model", model);
+		drawModel(shaderProgram, &backpack);
 
 		
 

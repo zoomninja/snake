@@ -68,6 +68,12 @@ float lightQuadratic = 0.032f;
 
 
 
+//noise
+
+
+
+fnl_state noise;
+
 
 
 
@@ -336,11 +342,14 @@ int main(){
 
 	
 
-	
 	//NOISE
 
 
-	fnl_state noise = fnlCreateState
+	noise = fnlCreateState();
+	noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+	noise.seed = 1254;
+	noise.frequency = 0.01f;
+
 	
 
 	
@@ -521,8 +530,11 @@ int main(){
 		setUniform(shaderProgram, "view", view);
 		setUniform(shaderProgram, "projection", projection);
 		
-		
-		loadChunk(0, 0);
+		for (int x = -5; x < 5; x++){
+			for (int y = -5; y < 5; y++){
+				loadChunk(x, y);
+			}
+		}
 
 		mat4 model;
 		glm_mat4_identity(model);
@@ -592,8 +604,7 @@ int main(){
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
-    return 0;
-}
+    return 0;}
 
 
 
@@ -785,7 +796,13 @@ unsigned int loadTexture(const char * path){
 }
 
 
+
+
+
 //chunks
+
+
+
 
 
 
@@ -794,7 +811,7 @@ void loadChunk(int chunkX, int chunkY){
 		for (unsigned int y = 0; y < 16; y++){
 			mat4 model;
 			glm_mat4_identity(model);
-			glm_translate(model, (vec3){chunkX * 16.0f, 0.0f, chunkY * 16.0f});
+			glm_translate(model, (vec3){chunkX * 16.0f, round(fnlGetNoise2D(&noise, chunkX * 16 + x, chunkY * 16 + y)), chunkY * 16.0f});
             glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
             setUniform(shaderProgram, "model", model);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);

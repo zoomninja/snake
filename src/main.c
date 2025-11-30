@@ -14,6 +14,8 @@
 #include "../include/cglm/cglm.h"
 #include "../include/shader.h"
 #include "../include/mesh.h"
+#define FNL_IMPL
+#include "../include/FastNoiseLite.h"
 
 
 
@@ -87,7 +89,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 unsigned int loadTexture(char const * path);
 
+//chunks
 
+void loadChunk(int chunkX, int chunkY);
 
 
 
@@ -174,7 +178,6 @@ int main(){
 
 	
 	loadShaders();
-	 
 
 
 
@@ -182,50 +185,39 @@ int main(){
 
 	
 
-	GLfloat vertices[] = { //cube
+	GLfloat cubeVertices[] = { //cube
 	//position			//normal vectors 	// texcoords
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 
 	 0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 
 	 0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 1.0f, 
 	-0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 
 
 	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
 	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 
 	 0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 
-	 0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 
 	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
 
 	-0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 
 	-0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 
 	-0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
-	-0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
 	-0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
-	-0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 
 
 	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 
 	 0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 
 	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
-	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 
 	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 
 
 	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 
 	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 
 	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 
-	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 
 	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 
-	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 
 
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 
 	 0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 
 	 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 
-	 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 
+	/*
 	-0.01f, 0.05f, 0.0f, 0.0f, 0.0f, //crosshair
 	0.01f, 0.05f, 0.0f, 0.0f, 0.0f, 
 	0.01f, 0.01f, 0.0f, 0.0f, 0.0f, 
@@ -238,6 +230,33 @@ int main(){
 	-0.05f, -0.01f, 0.0f, 0.0f, 0.0f, 
 	-0.05f, 0.01f, 0.0f, 0.0f, 0.0f, 
 	-0.01f, 0.01f, 0.0f, 0.0f, 0.0f
+	*/
+	};
+
+	GLuint cubeIndices[] = {
+    // Front face
+    4, 5, 6,  // Triangle 1
+    4, 7, 6,  // Triangle 2
+
+    // Back face
+    0, 1, 2,  // Triangle 3
+    0, 3, 2,  // Triangle 4
+
+    // Top face
+    23, 22, 21,  // Triangle 5
+    23, 20, 21,  // Triangle 6
+
+    // Bottom face
+    16, 17, 18,  // Triangle 7
+    16, 19, 18,  // Triangle 8
+
+    // Right face
+    15, 14, 13,  // Triangle 9
+    15, 12, 13,  // Triangle 10
+
+    // Left face
+    10, 11, 8,  // Triangle 11
+    10, 9, 8   // Triangle 12
 	};
 
 
@@ -266,41 +285,22 @@ int main(){
 	//objects
 
 
-	GLuint VAO, lightVAO, VBO, EBO; //vertex buffer object to send stuff from cpu to gpu in big batches
-	//index bufffer is EBO
-	//vertex array object basically tells opengl what VBOs to use and where to find them
-	//stores an array of VBOs probably
-	//makes it easier to change VBOs
-	glGenVertexArrays(1, &VAO); //1 because only 1 object
-	//MAKE SURE TO CREATE VAO BEFORE VBO
-	glGenBuffers(1, &VBO); //1 because only 1 3d object //creates the VBO //try to store vertices in big batches because it could be slow if sending data to gpu too often
-	glGenBuffers(1, &EBO); //1 cuz one object //creates the EBO
+	GLuint VAO, lightVAO, VBO, EBO;
+	glGenVertexArrays(1, &VAO); 
+	glGenBuffers(1, &VBO); 
+	glGenBuffers(1, &EBO); 
 
-	glBindVertexArray(VAO); //binds the current vertex array at the VAO
+	glBindVertexArray(VAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO); //binds the current "GL_ARRAY_BUFFER" as the VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //to store the vertices in the VBO
-	//last param is the way you want the vertices to be used
-	//STREAM means the vertices will be modified once and used a few times 
-	//STATIC means the vertices will be modified once and used many many times
-	//DYNAMIC means the vertices will be modified multiple times and used many many times
-	//DRAW means the vertices will be modified and used to draw an image on the screen
-	//READ means the vertices will be read?
-	//COPY will copy the vertices?
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW); 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
 
-	//configuration of VAO
 	//position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	//first input is the index of the vertex attribute we want to use //a vertex attribute is a way of communicating with a vertex shader from the outside
-	//second input is how many values we have per vertex which is 3 in our case becaus we have 3 floats
-	//third input is what type of values we have
-	//fourth input only matters if we have coordinates as ints 
-	//fifth input is the stride of our vertices which is just the amount of data between each vertex //should be same for all attributes
-	//sixth input is called the offset which is a pointer to where our vertices begin in the array but since our vertices begin right at the start of the array were gonna give this weird pointer void
-	glEnableVertexAttribArray(0); //enable the vertex attribarray and give it 0 because thats the position of our vertex attribute
+	glEnableVertexAttribArray(0);
 	//normal attribute
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
@@ -313,6 +313,7 @@ int main(){
 	glBindVertexArray(lightVAO);
 	// we only need to bind to the VBO, the container's VBO's data already contains the data.
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	// set the vertex attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -336,7 +337,10 @@ int main(){
 	
 
 	
-	
+	//NOISE
+
+
+	fnl_state noise = fnlCreateState
 	
 
 	
@@ -433,7 +437,10 @@ int main(){
 	
 
 	glEnable(GL_DEPTH_TEST); //enable depth buffer
+	glDepthFunc(GL_LESS);
 
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_ALWAYS, GL_ALWAYS, GL_ALWAYS);
 
 	
 
@@ -442,7 +449,7 @@ int main(){
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
 		
 
 
@@ -515,26 +522,19 @@ int main(){
 		setUniform(shaderProgram, "projection", projection);
 		
 		
-		for (int x = 0; x < 10; x++){
-			for (int y = 0; y < 10; y++){
-				mat4 model;
-				glm_mat4_identity(model);
-            	glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
-            	setUniform(shaderProgram, "model", model);
-            	glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
-		}
+		loadChunk(0, 0);
 
 		mat4 model;
 		glm_mat4_identity(model);
         glm_translate(model, (vec3){5.0f, 5.0f, 3.0f});
+		glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
         setUniform(shaderProgram, "model", model);
 		drawModel(shaderProgram, &backpack);
 
 		
 
 
-		//light cube
+		//light cubes
 
 
 		glBindVertexArray(lightVAO);
@@ -549,7 +549,7 @@ int main(){
 			glm_translate(model, pointLightVertices[i]);
 			glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
         	setUniform(lightShaderProgram, "model", model);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		}
 
 		
@@ -613,6 +613,7 @@ int main(){
 void processInput(GLFWwindow* window){
 	// Don't mutate the base speed; compute a per-frame velocity using deltaTime.
 	float velocity = cameraSpeed * deltaTime;
+	const float ylevel = cameraPos[1];
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
 		glm_vec3_scale(cameraFront, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
@@ -781,4 +782,22 @@ unsigned int loadTexture(const char * path){
     }
 
     return textureID;
+}
+
+
+//chunks
+
+
+
+void loadChunk(int chunkX, int chunkY){
+	for (unsigned int x = 0; x < 16; x++){
+		for (unsigned int y = 0; y < 16; y++){
+			mat4 model;
+			glm_mat4_identity(model);
+			glm_translate(model, (vec3){chunkX * 16.0f, 0.0f, chunkY * 16.0f});
+            glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
+            setUniform(shaderProgram, "model", model);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
+	}
 }

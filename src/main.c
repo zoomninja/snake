@@ -37,6 +37,8 @@ vec3 mv; //multiplied vector
 vec3 cameraPos = {5.0f, 5.0f, 5.0f};
 vec3 cameraFront = {0.0f, 0.0f, -1.0f};
 vec3 cameraUp = {0.0f, 1.0f, 0.0f};
+int cameraChunkX = 0;
+int cameraChunkZ = 0;
 
 
 bool firstMouse = true;
@@ -47,10 +49,11 @@ float pitch = 0.0f;
 const float sensitivity = 0.1f;
 float fov = 70.0f;
 
-const float cameraSpeed = 2.5f;
+float cameraSpeed = 2.5f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
+vec3 playerHitbox = {1.0f, 2.0f, 1.0f};
 float gravity = 10.0f; //per second
 float upVelocity = 0.0f;
 
@@ -97,7 +100,9 @@ unsigned int loadTexture(char const * path);
 
 //chunks
 
-void loadChunk(int chunkX, int chunkY);
+void checkCameraChunk();
+int getHeight(int x, int z);
+void loadChunk(int chunkX, int chunkZ);
 
 
 
@@ -242,27 +247,27 @@ int main(){
 	GLuint cubeIndices[] = {
     // Front face
     4, 5, 6,  // Triangle 1
-    4, 7, 6,  // Triangle 2
+    4, 6, 7,  // Triangle 2
 
     // Back face
     0, 1, 2,  // Triangle 3
-    0, 3, 2,  // Triangle 4
+    0, 2, 3,  // Triangle 4
 
     // Top face
     23, 22, 21,  // Triangle 5
-    23, 20, 21,  // Triangle 6
+    23, 21, 20,  // Triangle 6
 
     // Bottom face
     16, 17, 18,  // Triangle 7
-    16, 19, 18,  // Triangle 8
+    16, 18, 19,  // Triangle 8
 
     // Right face
     15, 14, 13,  // Triangle 9
-    15, 12, 13,  // Triangle 10
+    15, 13, 12,  // Triangle 10
 
     // Left face
     10, 11, 8,  // Triangle 11
-    10, 9, 8   // Triangle 12
+    10, 8, 9   // Triangle 12
 	};
 
 
@@ -291,10 +296,13 @@ int main(){
 	//objects
 
 
-	GLuint VAO, lightVAO, VBO, EBO;
+	GLuint VAO, lightVAO, VBO, EBO, FBO;
 	glGenVertexArrays(1, &VAO); 
 	glGenBuffers(1, &VBO); 
 	glGenBuffers(1, &EBO); 
+	glGenFramebuffers(1, &FBO);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
 	glBindVertexArray(VAO);
 
@@ -359,8 +367,8 @@ int main(){
 
 	//TEXTURES
 
-	unsigned int diffuseMap = loadTexture("resources/textures/container2.png");
-    unsigned int specularMap = loadTexture("resources/textures/container2_specular.png");
+	unsigned int diffuseMap = loadTexture("resources/textures/grass.jpg");
+    unsigned int specularMap = loadTexture("resources/textures/grass.jpg");
 
 
 
@@ -453,6 +461,10 @@ int main(){
 
 	
 
+	
+
+	
+
     while (!glfwWindowShouldClose(window)){
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -510,7 +522,7 @@ int main(){
 
 		mat4 projection;
 		glm_mat4_identity(projection);
-		glm_perspective(glm_rad(fov), 800.0f / 600.0f, 0.1f, 100.0f, projection);
+		glm_perspective(glm_rad(fov), 800.0f / 600.0f, 0.1f, 200.0f, projection);
 		
 
 
@@ -530,9 +542,9 @@ int main(){
 		setUniform(shaderProgram, "view", view);
 		setUniform(shaderProgram, "projection", projection);
 		
-		for (int x = -5; x < 5; x++){
-			for (int y = -5; y < 5; y++){
-				loadChunk(x, y);
+		for (int x = cameraChunkX - 5; x < cameraChunkX + 5; x++){
+			for (int z = cameraChunkZ - 5; z < cameraChunkZ + 5; z++){
+				loadChunk(x, z);
 			}
 		}
 
@@ -599,6 +611,7 @@ int main(){
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
+	glDeleteFramebuffers(1, &FBO);
 	glDeleteProgram(shaderProgram);
 	freeModel(&backpack);
 
@@ -629,11 +642,13 @@ void processInput(GLFWwindow* window){
 		glm_vec3_scale(cameraFront, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
+		checkCameraChunk();
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
 		glm_vec3_scale(cameraFront, velocity, sv);
 		glm_vec3_sub(cameraPos, sv, subv);
 		glm_vec3_copy(subv, cameraPos);
+		checkCameraChunk();
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
 		glm_vec3_cross(cameraFront, cameraUp, cp);
@@ -641,6 +656,7 @@ void processInput(GLFWwindow* window){
 		glm_vec3_scale(cp, velocity, sv);
 		glm_vec3_sub(cameraPos, sv, subv);
 		glm_vec3_copy(subv, cameraPos);
+		checkCameraChunk();
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
 		glm_vec3_cross(cameraFront, cameraUp, cp);
@@ -648,6 +664,7 @@ void processInput(GLFWwindow* window){
 		glm_vec3_scale(cp, velocity, sv);
 		glm_vec3_add(cameraPos, sv, av);
 		glm_vec3_copy(av, cameraPos);
+		checkCameraChunk();
 	}
 }
 
@@ -697,11 +714,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
-    fov -= (float)yoffset;
-    if (fov < 10.0f)
-        fov = 10.0f;
-    if (fov > 90.0f)
-        fov = 90.0f; 
+    cameraSpeed -= yoffset;
+	if (cameraSpeed < 1){
+		cameraSpeed = 1;
+	}
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
@@ -798,23 +814,55 @@ unsigned int loadTexture(const char * path){
 
 
 
+//physics
+
+
+void checkCollisions(){
+
+}
+
+
+
+
+
 
 //chunks
 
 
 
+void checkCameraChunk(){
+	cameraChunkX = round(cameraPos[0] / 16);
+	cameraChunkZ = round(cameraPos[2] / 16);
+}
+
+
+int getHeight(int x, int z){
+	return round(fnlGetNoise2D(&noise, x, z) * 5);
+}
 
 
 
-void loadChunk(int chunkX, int chunkY){
+
+void loadChunk(int chunkX, int chunkZ){
 	for (unsigned int x = 0; x < 16; x++){
-		for (unsigned int y = 0; y < 16; y++){
+		for (unsigned int z = 0; z < 16; z++){
+			int height = getHeight(chunkX * 16 + x, chunkZ * 16 + z);
 			mat4 model;
 			glm_mat4_identity(model);
-			glm_translate(model, (vec3){chunkX * 16.0f, round(fnlGetNoise2D(&noise, chunkX * 16 + x, chunkY * 16 + y)), chunkY * 16.0f});
-            glm_translate(model, (vec3){x+0.5f, 0.0f, y+0.5f});
+			glm_translate(model, (vec3){chunkX * 16.0f, 0.0f, chunkZ * 16.0f});
+            glm_translate(model, (vec3){x+0.5f, height, z+0.5f});
             setUniform(shaderProgram, "model", model);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			if (getHeight(chunkX * 16 + x, chunkZ * 16 + z + 1) < height)
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //front face
+			if (getHeight(chunkX * 16 + x, chunkZ * 16 + z - 1) < height)
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(float)*6)); //back face
+			if (getHeight(chunkX * 16 + x + 1, chunkZ * 16 + z) < height)
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(float)*24)); //right face
+			if (getHeight(chunkX * 16 + x - 1, chunkZ * 16 + z) < height)
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(float)*30)); //left face
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(float)*12)); //top face
+			
+            
 		}
 	}
 }

@@ -296,19 +296,17 @@ int main(){
 	//objects
 
 
-	GLuint VAO, lightVAO, VBO, EBO, FBO;
+	GLuint VAO, lightVAO, VBO, EBO, FBO, RBO;
+
+
 	glGenVertexArrays(1, &VAO); 
-	glGenBuffers(1, &VBO); 
-	glGenBuffers(1, &EBO); 
-	glGenFramebuffers(1, &FBO);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
 	glBindVertexArray(VAO);
-
+	
+	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW); 
 
+	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
 
@@ -334,15 +332,79 @@ int main(){
 	//texture attribute
 
 
+	
+	
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+
+	//generate texture
+	GLuint textureColorbuffer;
+	glGenTextures(1, &textureColorbuffer);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glUseProgram(screenShaderProgram);
+
+	setUniformInt(shaderProgram, "screenTexture", 0);
+
+	//attach it to currently bound framebuffer object
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
+	glGenRenderbuffers(1, &RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		printf("framebuffer is not complete");
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLuint screenVAO;
+	glGenVertexArrays(1, &screenVAO);
+	glBindVertexArray(screenVAO);
+
+	vec3 quadVertices[] = {
+		-0.5f, 0.5f, -0.5f, 0.5f,
+		0.5f, 0.5f, 0.5f, 0.5f, 
+		0.5f, -0.5f, 0.5f, -0.5f, 
+		-0.5f, 0.5f, -0.5f, 0.5f, 
+		0.5f, -0.5f, 0.5f, -0.5f, 
+		-0.5f, -0.5f, -0.5f, -0.5f
+	};
+
+	GLuint screenVBO;
+	glGenBuffers(1, &screenVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW); 
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	
+
+	
+
+
 
 	//unbinds
 
 
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0); //makes sure we dont accidentally change a VBO or VAO with a function
-	//basically unbinds it by binding it to 0
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
 
@@ -369,6 +431,9 @@ int main(){
 
 	unsigned int diffuseMap = loadTexture("resources/textures/grass.jpg");
     unsigned int specularMap = loadTexture("resources/textures/grass.jpg");
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, 800, 600, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, diffuseMap, 0);
 
 
 
@@ -456,8 +521,7 @@ int main(){
 	glEnable(GL_DEPTH_TEST); //enable depth buffer
 	glDepthFunc(GL_LESS);
 
-	glEnable(GL_STENCIL_TEST);
-	glStencilOp(GL_ALWAYS, GL_ALWAYS, GL_ALWAYS);
+	
 
 	
 
@@ -469,8 +533,11 @@ int main(){
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f); //tell gl to prepare this color in the back buffer //a state setting function
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //tell gl to clear the previous buffer //uses the current state to rewrite
+		glEnable(GL_DEPTH_TEST);
 		
 
 
@@ -581,7 +648,20 @@ int main(){
 		
 		
 
-		
+		//framebuffer stuff
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(screenShaderProgram);
+		glBindVertexArray(screenVAO);
+		glDisable(GL_DEPTH_TEST);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+
 		
 		/*first input is the type of primitive we want to use
 		second input is the starting index of the vertices, 0

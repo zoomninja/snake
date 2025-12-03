@@ -107,6 +107,29 @@ void loadShaders(){
 
     glDeleteShader(fragmentShader);
     glDeleteShader(vertexShader);
+
+    vertexSource = loadShaderSource("src/shaders/screenShader.vs");
+    fragmentSource = loadShaderSource("src/shaders/screenShader.fs");
+
+    glShaderSource(vertexShader, 1, &vertexSource, NULL);
+    glCompileShader(vertexShader);
+
+    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+    glCompileShader(fragmentShader);
+
+    screenShaderProgram = glCreateProgram();
+
+    glAttachShader(screenShaderProgram, vertexShader);
+    glAttachShader(screenShaderProgram, fragmentShader);
+
+    glLinkProgram(screenShaderProgram);
+
+    glGetProgramiv(screenShaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+        glGetProgramInfoLog(screenShaderProgram, 512, NULL, infoLog);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 }
 
 
